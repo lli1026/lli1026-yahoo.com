@@ -1,0 +1,60 @@
+rm(list=ls())
+
+#Course Project
+#1.Downloading the data sets
+url<-"https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+download.file(url,destfile="C:/Users/liel/Documents/CorseraDataScience/getting and cleaning data/Dataset")
+#loading the datasets to R              
+features <- read.table("C:/Users/liel/Documents/CorseraDataScience/getting and cleaning data/UCI HAR Dataset/features.txt", col.names = c("n","functions"))
+head(features)
+activities <- read.table("C:/Users/liel/Documents/CorseraDataScience/getting and cleaning data/UCI HAR Dataset/activity_labels.txt", col.names = c("code", "activity"))
+head(activities)
+subject_test <- read.table("C:/Users/liel/Documents/CorseraDataScience/getting and cleaning data/UCI HAR Dataset/subject_test.txt", col.names = "subject")
+head(subject_test)
+x_test <- read.table("C:/Users/liel/Documents/CorseraDataScience/getting and cleaning data/UCI HAR Dataset/X_test.txt", col.names = features$functions)
+head(x_test,n=1)
+y_test <- read.table("C:/Users/liel/Documents/CorseraDataScience/getting and cleaning data/UCI HAR Dataset/y_test.txt", col.names = "code")
+head(y_test,n=1)
+subject_train <- read.table("C:/Users/liel/Documents/CorseraDataScience/getting and cleaning data/UCI HAR Dataset/subject_train.txt", col.names = "subject")
+head(subject_train)
+x_train <- read.table("C:/Users/liel/Documents/CorseraDataScience/getting and cleaning data/UCI HAR Dataset/X_train.txt", col.names = features$functions)
+head(x_train,n=1)
+y_train <- read.table("C:/Users/liel/Documents/CorseraDataScience/getting and cleaning data/UCI HAR Dataset/y_train.txt", col.names = "code")
+head(y_train,n=1)
+#2.Merges the training and the test sets to create one data set
+x<-rbind(x_test,x_train)
+y<-rbind(y_test,y_train)
+sub<-rbind(subject_test,subject_train)
+mer<-cbind(sub,x,y)
+head(mer,n=1)
+#3.Extracts only the measurements on the mean and standard deviation for each measurement
+merSub<-mer[c("subject","code",colnames(mer)[grep("mean..",colnames(mer))],colnames(mer)[grep("std..",colnames(mer))])]
+head(merSub,n=1)
+dim(merSub)
+#4.Uses descriptive activity names to name the activities in the data set
+library(dplyr)
+merSubActName<-merge(activities,merSub,by="code")
+head(merSubActName)
+dim(merSubActName)
+#Appropriately labels the data set with descriptive variable names
+names(merSubActName)<-gsub("Acc", "Accelerometer", names(merSubActName))
+names(merSubActName)<-gsub("Gyro", "Gyroscope", names(merSubActName))
+names(merSubActName)<-gsub("BodyBody", "Body", names(merSubActName))
+names(merSubActName)<-gsub("Mag", "Magnitude", names(merSubActName))
+names(merSubActName)<-gsub("^t", "Time", names(merSubActName))
+names(merSubActName)<-gsub("^f", "Frequency", names(merSubActName))
+names(merSubActName)<-gsub("tBody", "TimeBody", names(merSubActName))
+names(merSubActName)<-gsub("-mean()", "Mean", names(merSubActName), ignore.case = TRUE)
+names(merSubActName)<-gsub("-std()", "STD", names(merSubActName), ignore.case = TRUE)
+names(merSubActName)<-gsub("-freq()", "Frequency", names(merSubActName), ignore.case = TRUE)
+names(merSubActName)<-gsub("angle", "Angle", names(merSubActName))
+names(merSubActName)<-gsub("gravity", "Gravity", names(merSubActName))
+length(names(merSubActName))
+dim(merSubActName)
+#5.From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject
+tidyData <-group_by(merSubActName,subject,activity) 
+tidyData<-summarize_all(tidyData,funs(mean))        
+head(tidyData,n=3)        
+str(tidyData)
+write.csv(tidyData,"C:\\Users\\liel\\Desktop\\tidyData.csv", row.names = FALSE)
+names(tidyData)
